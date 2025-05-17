@@ -61,6 +61,9 @@ jobs:
         run: pnpm run build
 
       - name: Publish to NPM
+        # For npm accounts with 2FA enabled, you need to use an Automation Token
+        # Create one at https://www.npmjs.com/settings/[your-username]/tokens
+        # and add it as NPM_TOKEN in your repository secrets
         run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
