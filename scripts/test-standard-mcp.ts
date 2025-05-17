@@ -66,6 +66,34 @@ interface Note {
   updatedAt: string;
 }
 
+// 添加自动化规则接口定义
+interface Automation {
+  id: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  dueAt?: string;
+  isRepeating?: boolean;
+  repeatPattern?: string;
+  type?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 添加日历事件接口定义
+interface CalendarEvent {
+  id: string;
+  calendarId: string;
+  title: string;
+  description?: string;
+  location?: string;
+  isAllDay?: boolean;
+  startTime: string;
+  endTime: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // 修改测试表，添加实际创建和验证操作
 const tests = [
   {
@@ -299,6 +327,181 @@ const tests = [
       
       if (deletedNote) {
         throw new Error('笔记删除失败，仍能获取到笔记');
+      }
+      
+      return { 
+        createResult, 
+        getResult, 
+        updateResult, 
+        deleteResult, 
+        verified: true 
+      };
+    }
+  },
+  {
+    name: '创建/更新/删除自动化规则完整流程',
+    run: async () => {
+      // 生成唯一标题避免重复
+      const uniqueTitle = `测试自动化规则 ${new Date().toISOString()}`;
+      
+      // 1. 创建自动化规则
+      console.log(chalk.yellow('1. 创建自动化规则...'));
+      const createResult = await callFunction('createAutomation', { 
+        title: uniqueTitle, 
+        description: '这是一个通过API创建的测试自动化规则',
+        dueDateTime: new Date(Date.now() + 86400000).toISOString(), // 明天
+        isRepeating: true,
+        repeatPattern: 'weekly',
+        actionType: 'notification'
+      });
+      console.log(chalk.green('自动化规则创建结果:'), JSON.stringify(createResult, null, 2));
+      
+      if (!createResult.success || !createResult.data?.id) {
+        throw new Error('创建自动化规则失败');
+      }
+      
+      const automationId = createResult.data.id;
+      
+      // 2. 获取自动化规则列表验证
+      console.log(chalk.yellow('2. 验证自动化规则是否在列表中...'));
+      const getResult = await callFunction('getAutomations', {});
+      
+      // 3. 验证是否包含创建的自动化规则
+      const foundAutomation = getResult.automations?.find((automation: Automation) => automation.title === uniqueTitle);
+      if (!foundAutomation) {
+        throw new Error(`在自动化规则列表中未找到创建的规则: ${uniqueTitle}`);
+      }
+      
+      // 4. 更新自动化规则
+      console.log(chalk.yellow(`3. 更新自动化规则 ${automationId}...`));
+      const updatedTitle = `${uniqueTitle} [已更新]`;
+      const updateResult = await callFunction('updateAutomation', {
+        automationId,
+        title: updatedTitle,
+        description: '这是通过API更新的自动化规则描述',
+        isRepeating: false
+      });
+      console.log(chalk.green('自动化规则更新结果:'), JSON.stringify(updateResult, null, 2));
+      
+      // 5. 验证更新是否成功
+      console.log(chalk.yellow('4. 验证自动化规则更新是否成功...'));
+      const getUpdatedResult = await callFunction('getAutomations', {});
+      const updatedAutomation = getUpdatedResult.automations?.find((automation: Automation) => automation.id === automationId);
+      
+      if (!updatedAutomation || updatedAutomation.title !== updatedTitle) {
+        throw new Error(`更新后的自动化规则标题不匹配: 期望 "${updatedTitle}", 实际 "${updatedAutomation?.title}"`);
+      }
+      
+      // 6. 删除自动化规则
+      console.log(chalk.yellow(`5. 删除自动化规则 ${automationId}...`));
+      const deleteResult = await callFunction('deleteAutomation', { automationId });
+      console.log(chalk.green('自动化规则删除结果:'), JSON.stringify(deleteResult, null, 2));
+      
+      // 7. 验证删除是否成功
+      console.log(chalk.yellow('6. 验证自动化规则是否已删除...'));
+      const getDeletedResult = await callFunction('getAutomations', {});
+      const deletedAutomation = getDeletedResult.automations?.find((automation: Automation) => automation.id === automationId);
+      
+      if (deletedAutomation) {
+        throw new Error('自动化规则删除失败，仍能获取到规则');
+      }
+      
+      return { 
+        createResult, 
+        getResult, 
+        updateResult, 
+        deleteResult, 
+        verified: true 
+      };
+    }
+  },
+  {
+    name: '创建/更新/删除日历事件完整流程',
+    run: async () => {
+      // 生成唯一标题避免重复
+      const uniqueTitle = `测试日历事件 ${new Date().toISOString()}`;
+      
+      // 计算开始和结束时间
+      const startTime = new Date();
+      startTime.setHours(startTime.getHours() + 1);
+      const endTime = new Date(startTime);
+      endTime.setHours(endTime.getHours() + 2);
+      
+      // 1. 创建日历事件
+      console.log(chalk.yellow('1. 创建日历事件...'));
+      const createResult = await callFunction('createCalendarEvent', { 
+        title: uniqueTitle, 
+        description: '这是一个通过API创建的测试日历事件',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        location: '线上会议',
+        isAllDay: false
+      });
+      console.log(chalk.green('日历事件创建结果:'), JSON.stringify(createResult, null, 2));
+      
+      if (!createResult.success || !createResult.data?.id) {
+        throw new Error('创建日历事件失败');
+      }
+      
+      const eventId = createResult.data.id;
+      
+      // 2. 获取日历事件列表验证
+      console.log(chalk.yellow('2. 验证日历事件是否在列表中...'));
+      // 获取当天和明天的日期范围
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 2);
+      
+      const getResult = await callFunction('getCalendarEvents', { 
+        startDate: today.toISOString(),
+        endDate: tomorrow.toISOString()
+      });
+      
+      // 3. 验证是否包含创建的日历事件
+      const foundEvent = getResult.events?.find((event: CalendarEvent) => event.title === uniqueTitle);
+      if (!foundEvent) {
+        throw new Error(`在日历事件列表中未找到创建的事件: ${uniqueTitle}`);
+      }
+      
+      // 4. 更新日历事件
+      console.log(chalk.yellow(`3. 更新日历事件 ${eventId}...`));
+      const updatedTitle = `${uniqueTitle} [已更新]`;
+      const updateResult = await callFunction('updateCalendarEvent', {
+        eventId,
+        title: updatedTitle,
+        description: '这是通过API更新的日历事件描述',
+        location: '办公室会议室'
+      });
+      console.log(chalk.green('日历事件更新结果:'), JSON.stringify(updateResult, null, 2));
+      
+      // 5. 验证更新是否成功
+      console.log(chalk.yellow('4. 验证日历事件更新是否成功...'));
+      const getUpdatedResult = await callFunction('getCalendarEvents', {
+        startDate: today.toISOString(),
+        endDate: tomorrow.toISOString()
+      });
+      const updatedEvent = getUpdatedResult.events?.find((event: CalendarEvent) => event.id === eventId);
+      
+      if (!updatedEvent || updatedEvent.title !== updatedTitle) {
+        throw new Error(`更新后的日历事件标题不匹配: 期望 "${updatedTitle}", 实际 "${updatedEvent?.title}"`);
+      }
+      
+      // 6. 删除日历事件
+      console.log(chalk.yellow(`5. 删除日历事件 ${eventId}...`));
+      const deleteResult = await callFunction('deleteCalendarEvent', { eventId });
+      console.log(chalk.green('日历事件删除结果:'), JSON.stringify(deleteResult, null, 2));
+      
+      // 7. 验证删除是否成功
+      console.log(chalk.yellow('6. 验证日历事件是否已删除...'));
+      const getDeletedResult = await callFunction('getCalendarEvents', {
+        startDate: today.toISOString(),
+        endDate: tomorrow.toISOString()
+      });
+      const deletedEvent = getDeletedResult.events?.find((event: CalendarEvent) => event.id === eventId);
+      
+      if (deletedEvent) {
+        throw new Error('日历事件删除失败，仍能获取到事件');
       }
       
       return { 

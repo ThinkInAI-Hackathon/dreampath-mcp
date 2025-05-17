@@ -50,10 +50,26 @@ interface Note {
 
 interface Automation {
   id: string;
-  name: string;
-  trigger: string;
-  action: string;
-  enabled: boolean;
+  projectId: string;
+  title: string;
+  description?: string;
+  dueAt?: string;
+  isRepeating?: boolean;
+  repeatPattern?: string;
+  type?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CalendarEvent {
+  id: string;
+  calendarId: string;
+  title: string;
+  description?: string;
+  location?: string;
+  isAllDay?: boolean;
+  startTime: string;
+  endTime: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -98,7 +114,7 @@ class DeepPathServer {
       tools: [
         {
           name: 'getProjectInfo',
-          description: 'Get information about the current project',
+          description: 'Get information about the current project. Use this when you need basic project details like name, ID, or general information to provide context.',
           inputSchema: {
             type: 'object',
             properties: {},
@@ -107,7 +123,7 @@ class DeepPathServer {
         },
         {
           name: 'getTasks',
-          description: 'Get a list of tasks',
+          description: 'Get a list of tasks from the project. Use this when the user asks about their tasks, to-do items, or when you need to show task status or overview information.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -126,7 +142,7 @@ class DeepPathServer {
         },
         {
           name: 'getTask',
-          description: 'Get details of a specific task',
+          description: 'Get details of a specific task. Use this when the user asks about a particular task by ID or when you need comprehensive information about one specific task.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -140,7 +156,7 @@ class DeepPathServer {
         },
         {
           name: 'createTask',
-          description: 'Create a new task',
+          description: 'Create a new task. Call this when the user asks to add, create, or set up a new task or to-do item.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -158,7 +174,7 @@ class DeepPathServer {
         },
         {
           name: 'updateTask',
-          description: 'Update an existing task',
+          description: 'Update an existing task. Use this when the user wants to modify, change, edit, or mark a task as complete.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -185,7 +201,7 @@ class DeepPathServer {
         },
         {
           name: 'getGoals',
-          description: 'Get a list of goals',
+          description: 'Get a list of goals. Use this when the user asks about their goals, objectives, targets, or when discussing project progress and planning.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -199,7 +215,7 @@ class DeepPathServer {
         },
         {
           name: 'createGoal',
-          description: 'Create a new goal',
+          description: 'Create a new goal. Call this when the user wants to set, create, or establish a new goal, objective, or milestone.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -221,7 +237,7 @@ class DeepPathServer {
         },
         {
           name: 'updateGoal',
-          description: 'Update an existing goal',
+          description: 'Update an existing goal. Use this when the user wants to modify, adjust, edit, or change the status or progress of a goal.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -252,7 +268,7 @@ class DeepPathServer {
         },
         {
           name: 'getNotes',
-          description: 'Get a list of notes',
+          description: 'Get a list of notes. Use this when the user asks about their notes, memos, or written information they\'ve saved.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -266,7 +282,7 @@ class DeepPathServer {
         },
         {
           name: 'createNote',
-          description: 'Create a new note',
+          description: 'Create a new note. Call this when the user wants to jot down, write, save, or create a new note, memo, or written record.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -284,7 +300,7 @@ class DeepPathServer {
         },
         {
           name: 'updateNote',
-          description: 'Update an existing note',
+          description: 'Update an existing note. Use this when the user wants to edit, modify, or change the content or title of a note they\'ve already created.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -306,7 +322,7 @@ class DeepPathServer {
         },
         {
           name: 'deleteNote',
-          description: 'Delete a note',
+          description: 'Delete a note. Call this when the user wants to remove, delete, or get rid of a specific note.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -320,7 +336,7 @@ class DeepPathServer {
         },
         {
           name: 'deleteTask',
-          description: 'Delete a task',
+          description: 'Delete a task. Use this when the user wants to remove, delete, or get rid of a specific task.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -334,7 +350,7 @@ class DeepPathServer {
         },
         {
           name: 'deleteGoal',
-          description: 'Delete a goal',
+          description: 'Delete a goal. Call this when the user wants to remove, delete, or abandon a specific goal.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -348,7 +364,7 @@ class DeepPathServer {
         },
         {
           name: 'getIcsLink',
-          description: 'Get ICS calendar link for the project',
+          description: 'Get ICS calendar link for the project. Use this when the user wants to export or connect their calendar to external calendar applications.',
           inputSchema: {
             type: 'object',
             properties: {},
@@ -357,10 +373,210 @@ class DeepPathServer {
         },
         {
           name: 'getAutomations',
-          description: 'Get a list of automation rules',
+          description: 'Get a list of automation rules. Use this when the user asks about automated processes, rules, recurring tasks, or workflow automations.',
           inputSchema: {
             type: 'object',
             properties: {},
+            required: [],
+          },
+        },
+        {
+          name: 'createAutomation',
+          description: 'Create a new automation rule. Call this when the user wants to set up, create, or establish a new automated process or recurring task.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              title: {
+                type: 'string',
+                description: 'Title of the automation rule'
+              },
+              description: {
+                type: 'string',
+                description: 'Description of the automation rule'
+              },
+              dueDateTime: {
+                type: 'string',
+                description: 'Due date and time in ISO format'
+              },
+              isRepeating: {
+                type: 'boolean',
+                description: 'Whether the automation is repeating'
+              },
+              repeatPattern: {
+                type: 'string',
+                description: 'Pattern for repeating (e.g., daily, weekly, monthly)',
+                enum: ['daily', 'weekly', 'monthly']
+              },
+              actionType: {
+                type: 'string',
+                description: 'Type of action for this automation',
+                enum: ['notification', 'email', 'webhook']
+              }
+            },
+            required: ['title'],
+          },
+        },
+        {
+          name: 'updateAutomation',
+          description: 'Update an existing automation rule. Use this when the user wants to modify, change, or edit the settings for an existing automation or recurring task.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              automationId: {
+                type: 'string',
+                description: 'ID of the automation rule to update'
+              },
+              title: {
+                type: 'string',
+                description: 'New title for the automation rule'
+              },
+              description: {
+                type: 'string',
+                description: 'New description for the automation rule'
+              },
+              isRepeating: {
+                type: 'boolean',
+                description: 'Whether the automation is repeating'
+              },
+              repeatPattern: {
+                type: 'string',
+                description: 'New pattern for repeating',
+                enum: ['daily', 'weekly', 'monthly']
+              }
+            },
+            required: ['automationId'],
+          },
+        },
+        {
+          name: 'deleteAutomation',
+          description: 'Delete an automation rule. Call this when the user wants to remove, delete, or cancel an automation or recurring task.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              automationId: {
+                type: 'string',
+                description: 'ID of the automation rule to delete'
+              }
+            },
+            required: ['automationId'],
+          },
+        },
+        {
+          name: 'getCalendarEvents',
+          description: 'Get a list of calendar events within a date range. Use this when the user asks about their schedule, calendar, events, meetings, or appointments.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              startDate: {
+                type: 'string',
+                description: 'Start date in ISO format'
+              },
+              endDate: {
+                type: 'string',
+                description: 'End date in ISO format'
+              }
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'createCalendarEvent',
+          description: 'Create a new calendar event. IMPORTANT: Call this whenever the user mentions any meeting, appointment, event, or schedule with a specific time or date. Always create calendar events when time-specific activities are discussed, even if not explicitly requested.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              title: {
+                type: 'string',
+                description: 'Title of the calendar event'
+              },
+              description: {
+                type: 'string',
+                description: 'Description of the calendar event'
+              },
+              startTime: {
+                type: 'string',
+                description: 'Start time in ISO format'
+              },
+              endTime: {
+                type: 'string',
+                description: 'End time in ISO format'
+              },
+              location: {
+                type: 'string',
+                description: 'Location of the event'
+              },
+              isAllDay: {
+                type: 'boolean',
+                description: 'Whether the event is an all-day event'
+              }
+            },
+            required: ['title', 'startTime', 'endTime'],
+          },
+        },
+        {
+          name: 'updateCalendarEvent',
+          description: 'Update an existing calendar event. Use this when the user wants to modify, reschedule, or change details of an existing meeting, appointment, or event.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              eventId: {
+                type: 'string',
+                description: 'ID of the calendar event to update'
+              },
+              title: {
+                type: 'string',
+                description: 'New title for the calendar event'
+              },
+              description: {
+                type: 'string',
+                description: 'New description for the calendar event'
+              },
+              startTime: {
+                type: 'string',
+                description: 'New start time in ISO format'
+              },
+              endTime: {
+                type: 'string',
+                description: 'New end time in ISO format'
+              },
+              location: {
+                type: 'string',
+                description: 'New location of the event'
+              },
+              isAllDay: {
+                type: 'boolean',
+                description: 'Whether the event is an all-day event'
+              }
+            },
+            required: ['eventId'],
+          },
+        },
+        {
+          name: 'deleteCalendarEvent',
+          description: 'Delete a calendar event. Call this when the user wants to cancel, remove, or delete a specific meeting, appointment, or calendar event.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              eventId: {
+                type: 'string',
+                description: 'ID of the calendar event to delete'
+              }
+            },
+            required: ['eventId'],
+          },
+        },
+        {
+          name: 'getCurrentDateTime',
+          description: 'Get the current date and time. Use this when the user asks about the current time, current date, or needs to know the present time/date for scheduling or reference.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              format: {
+                type: 'string',
+                description: 'Optional format for the date/time (e.g., "iso", "simple", "full")',
+                enum: ['iso', 'simple', 'full']
+              }
+            },
             required: [],
           },
         },
@@ -369,7 +585,49 @@ class DeepPathServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       try {
-        // Call the DeepPath API using the functionCall format
+        // Handle getCurrentDateTime locally
+        if (request.params.name === 'getCurrentDateTime') {
+          const now = new Date();
+          const format = request.params.arguments?.format || 'iso';
+          
+          let formattedDateTime;
+          switch (format) {
+            case 'iso':
+              formattedDateTime = now.toISOString();
+              break;
+            case 'simple':
+              formattedDateTime = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+              break;
+            case 'full':
+              formattedDateTime = now.toLocaleString(undefined, { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short'
+              });
+              break;
+            default:
+              formattedDateTime = now.toISOString();
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({ 
+                  datetime: formattedDateTime,
+                  timestamp: now.getTime() 
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
+        // Call the DeepPath API for all other functions
         const response = await this.axiosInstance.post('', {
           functionCall: {
             name: request.params.name,
