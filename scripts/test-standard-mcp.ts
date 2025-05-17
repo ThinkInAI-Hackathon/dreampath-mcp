@@ -1,4 +1,5 @@
 /**
+ * DeepPath 标准MCP API测试脚本
  * 
  * 用法: 
  * 1. 首先获取项目API密钥: 在DeepPath项目设置页面创建API密钥
@@ -92,7 +93,7 @@ const tests = [
     run: async () => await callFunction('getAutomations', {})
   },
   {
-    name: '创建任务并验证',
+    name: '创建/更新/删除任务完整流程',
     run: async () => {
       // 生成唯一标题避免重复
       const uniqueTitle = `测试任务 ${new Date().toISOString()}`;
@@ -105,11 +106,11 @@ const tests = [
       });
       console.log(chalk.green('任务创建结果:'), JSON.stringify(createResult, null, 2));
       
-      if (!createResult.success || !createResult.task || !createResult.task.id) {
+      if (!createResult.success || !createResult.data?.id) {
         throw new Error('创建任务失败');
       }
       
-      const taskId = createResult.task.id;
+      const taskId = createResult.data.id;
       
       // 2. 获取任务详情验证
       console.log(chalk.yellow(`2. 验证任务 ${taskId}...`));
@@ -121,11 +122,50 @@ const tests = [
         throw new Error(`创建的任务标题不匹配: 期望 "${uniqueTitle}", 实际 "${getResult.task?.title}"`);
       }
       
-      return { createResult, getResult, verified: true };
+      // 4. 更新任务
+      console.log(chalk.yellow(`3. 更新任务 ${taskId}...`));
+      const updatedTitle = `${uniqueTitle} [已更新]`;
+      const updateResult = await callFunction('updateTask', { 
+        taskId, 
+        title: updatedTitle,
+        description: '这是通过API更新的任务描述'
+      });
+      console.log(chalk.green('任务更新结果:'), JSON.stringify(updateResult, null, 2));
+      
+      // 5. 验证更新是否成功
+      console.log(chalk.yellow(`4. 验证更新后的任务 ${taskId}...`));
+      const getUpdatedResult = await callFunction('getTask', { taskId });
+      
+      if (getUpdatedResult.task?.title !== updatedTitle) {
+        throw new Error(`更新后的任务标题不匹配: 期望 "${updatedTitle}", 实际 "${getUpdatedResult.task?.title}"`);
+      }
+      
+      // 6. 删除任务
+      console.log(chalk.yellow(`5. 删除任务 ${taskId}...`));
+      const deleteResult = await callFunction('deleteTask', { taskId });
+      console.log(chalk.green('任务删除结果:'), JSON.stringify(deleteResult, null, 2));
+      
+      // 7. 验证删除是否成功
+      console.log(chalk.yellow(`6. 验证任务 ${taskId} 是否已删除...`));
+      try {
+        await callFunction('getTask', { taskId });
+        throw new Error('任务删除失败，仍能获取到任务');
+      } catch {
+        // 预期会有错误，因为任务已删除
+        console.log(chalk.green('任务已成功删除'));
+      }
+      
+      return { 
+        createResult, 
+        getResult, 
+        updateResult, 
+        deleteResult, 
+        verified: true 
+      };
     }
   },
   {
-    name: '创建目标并验证',
+    name: '创建/更新/删除目标完整流程',
     run: async () => {
       // 生成唯一标题避免重复
       const uniqueTitle = `测试目标 ${new Date().toISOString()}`;
@@ -139,14 +179,15 @@ const tests = [
       });
       console.log(chalk.green('目标创建结果:'), JSON.stringify(createResult, null, 2));
       
-      if (!createResult.success) {
+      if (!createResult.success || !createResult.data?.id) {
         throw new Error('创建目标失败');
       }
+      
+      const goalId = createResult.data.id;
       
       // 2. 获取目标列表验证
       console.log(chalk.yellow('2. 验证目标是否在列表中...'));
       const getResult = await callFunction('getGoals', { includeCompleted: false });
-      console.log(chalk.green('目标列表获取结果:'), JSON.stringify(getResult, null, 2));
       
       // 3. 验证是否包含创建的目标
       const foundGoal = getResult.goals?.find((goal: Goal) => goal.title === uniqueTitle);
@@ -154,11 +195,51 @@ const tests = [
         throw new Error(`在目标列表中未找到创建的目标: ${uniqueTitle}`);
       }
       
-      return { createResult, getResult, verified: true };
+      // 4. 更新目标
+      console.log(chalk.yellow(`3. 更新目标 ${goalId}...`));
+      const updatedTitle = `${uniqueTitle} [已更新]`;
+      const updateResult = await callFunction('updateGoal', {
+        goalId,
+        title: updatedTitle,
+        description: '这是通过API更新的目标描述',
+        progress: 50
+      });
+      console.log(chalk.green('目标更新结果:'), JSON.stringify(updateResult, null, 2));
+      
+      // 5. 验证更新是否成功
+      console.log(chalk.yellow('4. 验证目标更新是否成功...'));
+      const getUpdatedResult = await callFunction('getGoals', { includeCompleted: false });
+      const updatedGoal = getUpdatedResult.goals?.find((goal: Goal) => goal.id === goalId);
+      
+      if (!updatedGoal || updatedGoal.title !== updatedTitle) {
+        throw new Error(`更新后的目标标题不匹配: 期望 "${updatedTitle}", 实际 "${updatedGoal?.title}"`);
+      }
+      
+      // 6. 删除目标
+      console.log(chalk.yellow(`5. 删除目标 ${goalId}...`));
+      const deleteResult = await callFunction('deleteGoal', { goalId });
+      console.log(chalk.green('目标删除结果:'), JSON.stringify(deleteResult, null, 2));
+      
+      // 7. 验证删除是否成功
+      console.log(chalk.yellow('6. 验证目标是否已删除...'));
+      const getDeletedResult = await callFunction('getGoals', { includeCompleted: false });
+      const deletedGoal = getDeletedResult.goals?.find((goal: Goal) => goal.id === goalId);
+      
+      if (deletedGoal) {
+        throw new Error('目标删除失败，仍能获取到目标');
+      }
+      
+      return { 
+        createResult, 
+        getResult, 
+        updateResult, 
+        deleteResult, 
+        verified: true 
+      };
     }
   },
   {
-    name: '创建笔记并验证',
+    name: '创建/更新/删除笔记完整流程',
     run: async () => {
       // 生成唯一标题避免重复
       const uniqueTitle = `测试笔记 ${new Date().toISOString()}`;
@@ -171,14 +252,15 @@ const tests = [
       });
       console.log(chalk.green('笔记创建结果:'), JSON.stringify(createResult, null, 2));
       
-      if (!createResult.success) {
+      if (!createResult.success || !createResult.data?.id) {
         throw new Error('创建笔记失败');
       }
+      
+      const noteId = createResult.data.id;
       
       // 2. 获取笔记列表验证
       console.log(chalk.yellow('2. 验证笔记是否在列表中...'));
       const getResult = await callFunction('getNotes', { limit: 10 });
-      console.log(chalk.green('笔记列表获取结果:'), JSON.stringify(getResult, null, 2));
       
       // 3. 验证是否包含创建的笔记
       const foundNote = getResult.notes?.find((note: Note) => note.title === uniqueTitle);
@@ -186,8 +268,51 @@ const tests = [
         throw new Error(`在笔记列表中未找到创建的笔记: ${uniqueTitle}`);
       }
       
-      return { createResult, getResult, verified: true };
+      // 4. 更新笔记
+      console.log(chalk.yellow(`3. 更新笔记 ${noteId}...`));
+      const updatedTitle = `${uniqueTitle} [已更新]`;
+      const updateResult = await callFunction('updateNote', {
+        noteId,
+        title: updatedTitle,
+        content: '这是通过API更新的笔记内容'
+      });
+      console.log(chalk.green('笔记更新结果:'), JSON.stringify(updateResult, null, 2));
+      
+      // 5. 验证更新是否成功
+      console.log(chalk.yellow('4. 验证笔记更新是否成功...'));
+      const getUpdatedResult = await callFunction('getNotes', { limit: 10 });
+      const updatedNote = getUpdatedResult.notes?.find((note: Note) => note.id === noteId);
+      
+      if (!updatedNote || updatedNote.title !== updatedTitle) {
+        throw new Error(`更新后的笔记标题不匹配: 期望 "${updatedTitle}", 实际 "${updatedNote?.title}"`);
+      }
+      
+      // 6. 删除笔记
+      console.log(chalk.yellow(`5. 删除笔记 ${noteId}...`));
+      const deleteResult = await callFunction('deleteNote', { noteId });
+      console.log(chalk.green('笔记删除结果:'), JSON.stringify(deleteResult, null, 2));
+      
+      // 7. 验证删除是否成功
+      console.log(chalk.yellow('6. 验证笔记是否已删除...'));
+      const getDeletedResult = await callFunction('getNotes', { limit: 10 });
+      const deletedNote = getDeletedResult.notes?.find((note: Note) => note.id === noteId);
+      
+      if (deletedNote) {
+        throw new Error('笔记删除失败，仍能获取到笔记');
+      }
+      
+      return { 
+        createResult, 
+        getResult, 
+        updateResult, 
+        deleteResult, 
+        verified: true 
+      };
     }
+  },
+  {
+    name: '获取ICS链接',
+    run: async () => await callFunction('getIcsLink', {})
   }
 ];
 

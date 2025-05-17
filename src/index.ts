@@ -283,6 +283,79 @@ class DeepPathServer {
           },
         },
         {
+          name: 'updateNote',
+          description: 'Update an existing note',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              noteId: {
+                type: 'string',
+                description: 'ID of the note to update'
+              },
+              title: {
+                type: 'string',
+                description: 'New title for the note'
+              },
+              content: {
+                type: 'string',
+                description: 'New content for the note'
+              }
+            },
+            required: ['noteId'],
+          },
+        },
+        {
+          name: 'deleteNote',
+          description: 'Delete a note',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              noteId: {
+                type: 'string',
+                description: 'ID of the note to delete'
+              }
+            },
+            required: ['noteId'],
+          },
+        },
+        {
+          name: 'deleteTask',
+          description: 'Delete a task',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              taskId: {
+                type: 'string',
+                description: 'ID of the task to delete'
+              }
+            },
+            required: ['taskId'],
+          },
+        },
+        {
+          name: 'deleteGoal',
+          description: 'Delete a goal',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              goalId: {
+                type: 'string',
+                description: 'ID of the goal to delete'
+              }
+            },
+            required: ['goalId'],
+          },
+        },
+        {
+          name: 'getIcsLink',
+          description: 'Get ICS calendar link for the project',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+            required: [],
+          },
+        },
+        {
           name: 'getAutomations',
           description: 'Get a list of automation rules',
           inputSchema: {
