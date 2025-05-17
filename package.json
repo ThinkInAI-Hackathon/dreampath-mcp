@@ -1,0 +1,29 @@
+{
+  "name": "deeppath-mcp",
+  "version": "1.0.0",
+  "description": "DeepPath MCP server for Anthropic integration",
+  "type": "module",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "start": "node build/index.js",
+    "dev": "tsc && node build/index.js",
+    "get-api-key": "node scripts/get-api-key.js",
+    "setup": "node scripts/setup-mcp-config.js"
+  },
+  "keywords": [
+    "mcp",
+    "deeppath",
+    "anthropic"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.3",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2"
+  }
+}
