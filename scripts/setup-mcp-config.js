@@ -20,7 +20,10 @@ const rl = readline.createInterface({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
-const buildPath = path.join(projectRoot, 'build', 'index.js');
+
+// 可以选择使用全局 npm 安装的方式
+const useNpmPackage = true;
+const buildPath = useNpmPackage ? 'deeppath-mcp' : path.join(projectRoot, 'build', 'index.js');
 
 // Determine the platform-specific paths
 const homedir = os.homedir();
@@ -71,7 +74,7 @@ function updateConfig(configPath, apiKey, baseUrl) {
 
   // Add or update the DeepPath MCP server config
   config.mcpServers.deeppath = {
-    command: 'node',
+    command: useNpmPackage ? 'npx' : 'node',
     args: [buildPath],
     env: {
       DEEPPATH_API_KEY: apiKey,
@@ -107,8 +110,33 @@ function main() {
     rl.question('Enter the DeepPath base URL (default: http://localhost:3000): ', (baseUrl) => {
       baseUrl = baseUrl || 'http://localhost:3000';
 
-      rl.question('Which application do you want to configure? (1: VSCode Claude Extension, 2: Claude Desktop App, 3: Both): ', (choice) => {
+      rl.question('Which application do you want to configure? (1: VSCode Claude Extension, 2: Claude Desktop App, 3: Both, 4: Just show configuration): ', (choice) => {
         let success = false;
+
+        // 如果选择打印配置，则直接显示配置内容而不保存
+        if (choice === '4') {
+          const configObject = {
+            mcpServers: {
+              deeppath: {
+                command: useNpmPackage ? 'npx' : 'node',
+                args: [buildPath],
+                env: {
+                  DEEPPATH_API_KEY: apiKey,
+                  DEEPPATH_BASE_URL: baseUrl
+                },
+                disabled: false,
+                autoApprove: []
+              }
+            }
+          };
+
+          console.log('\n==== Configuration JSON ====');
+          console.log(JSON.stringify(configObject, null, 2));
+          console.log('\nVSCode path: ' + vscodeConfigPath);
+          console.log('Claude Desktop path: ' + desktopConfigPath);
+          rl.close();
+          return;
+        }
 
         if (choice === '1' || choice === '3') {
           success = updateConfig(vscodeConfigPath, apiKey, baseUrl) || success;

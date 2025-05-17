@@ -1,9 +1,12 @@
 {
   "name": "deeppath-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "DeepPath MCP server for Anthropic integration",
   "type": "module",
   "main": "build/index.js",
+  "bin": {
+    "deeppath-mcp": "./build/index.js"
+  },
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "start": "node build/index.js",
