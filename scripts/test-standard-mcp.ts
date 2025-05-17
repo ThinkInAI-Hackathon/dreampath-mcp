@@ -516,6 +516,44 @@ const tests = [
   {
     name: '获取ICS链接',
     run: async () => await callFunction('getIcsLink', {})
+  },
+  {
+    name: '控制台灯开关',
+    run: async () => {
+      // 1. 开启台灯
+      console.log(chalk.yellow('1. 开启台灯...'));
+      const turnOnResult = await callFunction('toggleLamp', { status: 'on' });
+      console.log(chalk.green('开启台灯结果:'), JSON.stringify(turnOnResult, null, 2));
+      
+      if (!turnOnResult.success) {
+        throw new Error('开启台灯失败');
+      }
+      
+      // 验证状态是否正确
+      if (turnOnResult.device?.status !== 'on') {
+        throw new Error(`台灯状态不匹配: 期望 "on", 实际 "${turnOnResult.device?.status}"`);
+      }
+      
+      // 2. 关闭台灯
+      console.log(chalk.yellow('2. 关闭台灯...'));
+      const turnOffResult = await callFunction('toggleLamp', { status: 'off' });
+      console.log(chalk.green('关闭台灯结果:'), JSON.stringify(turnOffResult, null, 2));
+      
+      if (!turnOffResult.success) {
+        throw new Error('关闭台灯失败');
+      }
+      
+      // 验证状态是否正确
+      if (turnOffResult.device?.status !== 'off') {
+        throw new Error(`台灯状态不匹配: 期望 "off", 实际 "${turnOffResult.device?.status}"`);
+      }
+      
+      return {
+        turnOnResult,
+        turnOffResult,
+        verified: true
+      };
+    }
   }
 ];
 

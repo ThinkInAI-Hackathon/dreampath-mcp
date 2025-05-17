@@ -566,6 +566,21 @@ class DeepPathServer {
           },
         },
         {
+          name: 'toggleLamp',
+          description: 'Control the status of a desk lamp. Use this when the user wants to turn on or off their desk lamp or control their smart home devices.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              status: {
+                type: 'string',
+                description: 'Status to set the lamp to (on/off)',
+                enum: ['on', 'off']
+              }
+            },
+            required: ['status'],
+          },
+        },
+        {
           name: 'getCurrentDateTime',
           description: 'Get the current date and time. Use this when the user asks about the current time, current date, or needs to know the present time/date for scheduling or reference.',
           inputSchema: {

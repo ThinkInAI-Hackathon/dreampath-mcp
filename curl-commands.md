@@ -409,3 +409,37 @@ curl -X POST "http://localhost:3000/api/mcp/standard" \
     }
   }'
 ```
+
+## 控制台灯
+
+### 开关台灯
+
+```bash
+curl -X POST "http://localhost:3000/api/mcp/standard" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer dp_your_api_key_here" \
+  -d '{
+    "functionCall": {
+      "name": "toggleLamp",
+      "parameters": {
+        "status": "on"
+      }
+    }
+  }'
+```
+
+## 获取当前日期和时间
+
+```bash
+curl -X POST "http://localhost:3000/api/mcp/standard" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer dp_your_api_key_here" \
+  -d '{
+    "functionCall": {
+      "name": "getCurrentDateTime",
+      "parameters": {
+        "format": "iso"
+      }
+    }
+  }'
+```
